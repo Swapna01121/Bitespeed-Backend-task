@@ -1,13 +1,15 @@
 {
   "name": "bitespeed-project",
   "version": "1.0.0",
-  "description": "",
+  "description": "Bitespeed backend assignment",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon src/index.ts"
+    "dev": "nodemon src/index.ts",
+    "start": "ts-node src/index.ts",
+    "build": "tsc"
   },
   "keywords": [],
-  "author": "",
+  "author": "Swapna Sri",
   "license": "ISC",
   "dependencies": {
     "@prisma/client": "^5.10.2",

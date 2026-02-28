@@ -1,0 +1,16 @@
+# Bitespeed Backend Assignment
+
+This project implements the `/identify` API using Node.js, Express, Prisma, and SQLite.
+
+## Tech Stack
+- Node.js
+- Express
+- TypeScript
+- Prisma ORM
+- SQLite
+
+## Setup Instructions
+
+1. Install dependencies
+   ```bash
+   npm install

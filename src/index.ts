@@ -6,6 +6,7 @@ const prisma = new PrismaClient();
 
 app.use(express.json());
 
+// POST /identify endpoint
 app.post("/identify", async (req: Request, res: Response) => {
   try {
     const { email, phoneNumber } = req.body;
@@ -44,17 +45,14 @@ app.post("/identify", async (req: Request, res: Response) => {
         contact: {
           primaryContactId: newContact.id,
           emails: newContact.email ? [newContact.email] : [],
-          phoneNumbers: newContact.phoneNumber
-            ? [newContact.phoneNumber]
-            : [],
+          phoneNumbers: newContact.phoneNumber ? [newContact.phoneNumber] : [],
           secondaryContactIds: [],
         },
       });
     }
 
     // 3. Find primary
-    let primary =
-      contacts.find((c) => c.linkPrecedence === "primary") || null;
+    let primary = contacts.find((c) => c.linkPrecedence === "primary") || null;
 
     if (!primary) {
       const first = contacts[0];
@@ -89,23 +87,14 @@ app.post("/identify", async (req: Request, res: Response) => {
       },
     });
 
-    // 5. Merge multiple primaries (FIXED PART)
-    const primaries = linkedContacts.filter(
-      (c) => c.linkPrecedence === "primary"
-    );
+    // 5. Merge multiple primaries (if any)
+    const primaries = linkedContacts.filter((c) => c.linkPrecedence === "primary");
 
     if (primaries.length > 1) {
       const mainPrimary = primaries[0];
 
-      if (!mainPrimary) {
-        return res.status(500).json({
-          error: "Primary merge failed",
-        });
-      }
-
       for (let i = 1; i < primaries.length; i++) {
         const current = primaries[i];
-
         if (!current) continue;
 
         await prisma.contact.update({
@@ -121,13 +110,8 @@ app.post("/identify", async (req: Request, res: Response) => {
     }
 
     // 6. Check if new info exists
-    const emailExists = linkedContacts.some(
-      (c) => c.email === email
-    );
-
-    const phoneExists = linkedContacts.some(
-      (c) => c.phoneNumber === phoneNumber
-    );
+    const emailExists = linkedContacts.some((c) => c.email === email);
+    const phoneExists = linkedContacts.some((c) => c.phoneNumber === phoneNumber);
 
     // 7. Create secondary if needed
     if ((email && !emailExists) || (phoneNumber && !phoneExists)) {
@@ -162,23 +146,11 @@ app.post("/identify", async (req: Request, res: Response) => {
     for (const c of finalContacts) {
       if (c.email) emails.add(c.email);
       if (c.phoneNumber) phones.add(c.phoneNumber);
-
-      if (c.linkPrecedence === "secondary") {
-        secondaryIds.push(c.id);
-      }
+      if (c.linkPrecedence === "secondary") secondaryIds.push(c.id);
     }
 
-    const emailList = [
-      primary.email,
-      ...Array.from(emails).filter((e) => e !== primary.email),
-    ].filter(Boolean);
-
-    const phoneList = [
-      primary.phoneNumber,
-      ...Array.from(phones).filter(
-        (p) => p !== primary.phoneNumber
-      ),
-    ].filter(Boolean);
+    const emailList = [primary.email, ...Array.from(emails).filter((e) => e !== primary.email)].filter(Boolean);
+    const phoneList = [primary.phoneNumber, ...Array.from(phones).filter((p) => p !== primary.phoneNumber)].filter(Boolean);
 
     return res.json({
       contact: {
@@ -190,11 +162,13 @@ app.post("/identify", async (req: Request, res: Response) => {
     });
   } catch (err) {
     console.error(err);
-
-    return res.status(500).json({
-      error: "Internal Server Error",
-    });
+    return res.status(500).json({ error: "Internal Server Error" });
   }
+});
+
+// Optional root route to verify server is live
+app.get("/", (req, res) => {
+  res.send("Bitespeed backend is live!");
 });
 
 // Start server
